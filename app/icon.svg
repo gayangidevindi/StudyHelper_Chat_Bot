@@ -1,0 +1,21 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F7CFF"/>
+      <stop offset="100%" stop-color="#2F5BE0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+
+  <!-- Open book -->
+  <g transform="translate(48, 96)">
+    <path d="M80 0 C60 -6 30 -8 0 0 L0 78 C30 70 60 72 80 78 Z" fill="#FFFFFF" opacity="0.95"/>
+    <path d="M80 0 C100 -6 130 -8 160 0 L160 78 C130 70 100 72 80 78 Z" fill="#FFFFFF" opacity="0.95"/>
+    <line x1="80" y1="2" x2="80" y2="78" stroke="#2F5BE0" stroke-width="3"/>
+  </g>
+
+  <!-- Spark / spark of insight, top right -->
+  <path d="M196 44 L204 62 L222 70 L204 78 L196 96 L188 78 L170 70 L188 62 Z" fill="#FFFFFF"/>
+</svg>
