@@ -131,7 +131,7 @@ export default function StudyPage() {
 
         <div className="progress-actions"><ProgressTracker stats={stats} /><button type="button" className="secondary-button clear-session" onClick={clearSession}>Clear session</button></div>
 
-        <div className="mode-tabs" role="tablist" aria-label="Learning modes">
+        <div className="mode-tabs !flex !grid-cols-none gap-2 !overflow-x-auto !overflow-y-hidden pb-1 sm:!grid sm:!overflow-visible" role="tablist" aria-label="Learning modes">
           {tabs.map((tab) => {
             const Icon = tabDetails[tab.key].icon;
 
@@ -141,28 +141,28 @@ export default function StudyPage() {
                 onClick={() => setMode(tab.key)}
                 role="tab"
                 aria-selected={mode === tab.key}
-                className={`mode-tab ${mode === tab.key ? 'active' : ''}`}
+                className={`mode-tab !min-w-[205px] !shrink-0 !px-3 !py-3 sm:!min-w-0 sm:!px-[18px] sm:!py-4 ${mode === tab.key ? 'active' : ''}`}
               >
                 <span className="mode-icon" aria-hidden="true"><Icon size={18} strokeWidth={1.8} /></span>
-                <span><span className="mode-tab-title">{tab.label}</span><span className="mode-tab-copy">{tabDetails[tab.key].copy}</span></span>
+                <span className="min-w-0"><span className="mode-tab-title !text-base sm:!text-lg">{tab.label}</span><span className="mode-tab-copy !text-xs sm:!text-[11px]">{tabDetails[tab.key].copy}</span></span>
               </button>
             );
           })}
         </div>
 
-        <section className="workspace single" role="tabpanel" aria-hidden={mode !== 'explain'} style={{ display: mode === 'explain' ? 'block' : 'none' }}>
+        <section className={`workspace single ${mode === 'explain' ? '!block' : '!hidden'}`} role="tabpanel" aria-hidden={mode !== 'explain'}>
             <div className="panel">
               <div className="panel-header"><div><p className="panel-kicker">01 / Understand</p><h2 className="panel-title">Ask your tutor anything.</h2><p className="panel-description">Untangle a tricky idea, ask for an example, or paste a concept you want explained simply.</p></div><span className="mode-icon" aria-hidden="true"><Sparkles size={18} strokeWidth={1.8} /></span></div>
               <div className="panel-body"><ExplainChat key={resetKey} initialMessages={chatMessages} onMessagesChange={setChatMessages} /></div>
             </div>
         </section>
 
-        <section className="workspace" role="tabpanel" aria-hidden={mode !== 'quiz'} style={{ display: mode === 'quiz' ? 'grid' : 'none' }}>
+        <section className={`workspace gap-4 ${mode === 'quiz' ? '!grid !grid-cols-1 md:!grid-cols-[minmax(0,1.4fr)_minmax(280px,.8fr)]' : '!hidden'}`} role="tabpanel" aria-hidden={mode !== 'quiz'}>
             <div className="panel"><div className="panel-header"><div><p className="panel-kicker">02 / Recall</p><h2 className="panel-title">Build a quiz from your notes.</h2><p className="panel-description">Practice retrieval with five focused questions, then see why each answer is right.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><QuizView key={resetKey} notes={notes} onComplete={handleQuizComplete} /></div></div>
             <aside className="tip-card"><span className="tip-label">A small study tip</span><h2>Recall beats rereading.</h2><p>Try answering from memory before checking the explanation. That little pause helps the idea stick.</p></aside>
         </section>
 
-        <section className="workspace" role="tabpanel" aria-hidden={mode !== 'shortanswer'} style={{ display: mode === 'shortanswer' ? 'grid' : 'none' }}>
+        <section className={`workspace gap-4 ${mode === 'shortanswer' ? '!grid !grid-cols-1 md:!grid-cols-[minmax(0,1.4fr)_minmax(280px,.8fr)]' : '!hidden'}`} role="tabpanel" aria-hidden={mode !== 'shortanswer'}>
             <div className="panel"><div className="panel-header"><div><p className="panel-kicker">03 / Explain</p><h2 className="panel-title">Put your understanding into words.</h2><p className="panel-description">Write a thoughtful answer, then get specific feedback from your AI tutor.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><div style={{ marginTop: 24 }}><ShortAnswer key={resetKey} notes={notes} /></div></div></div>
             <aside className="tip-card"><span className="tip-label">A small study tip</span><h2>Clarity comes from effort.</h2><p>Do not worry about perfect wording. Start with what you know and let the feedback show you what to strengthen.</p></aside>
         </section>

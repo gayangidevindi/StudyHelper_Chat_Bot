@@ -90,11 +90,11 @@ export default function ShortAnswer({ notes }: { notes: string }) {
   };
 
   return (
-    <div className="short-answer">
+    <div className="short-answer min-w-0">
       <button
         onClick={generateQuestion}
         disabled={loadingQuestion || !notes.trim()}
-        className="primary-button"
+        className="primary-button min-h-11 w-full px-4 text-sm sm:w-auto"
       >
         {loadingQuestion ? 'Writing a question...' : question ? 'Try another question' : 'Generate short-answer question'}
       </button>
@@ -102,11 +102,11 @@ export default function ShortAnswer({ notes }: { notes: string }) {
       {error && <p className="error-message" role="alert">{error}</p>}
 
       {question && (
-        <div className="answer-flow" style={{ marginTop: 24 }}>
-          <div className="flow-step"><p className="flow-label">Your question</p><div className="question-card"><p>{question}</p></div></div>
-          <div className="flow-step"><p className="flow-label">Your answer</p><textarea aria-label="Your short answer" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Take a moment to explain it in your own words..." rows={5} disabled={!!grade} className="answer-textarea" />{!grade && <button onClick={submitAnswer} disabled={loadingGrade || !userAnswer.trim()} className="primary-button" style={{ marginTop: 10 }}>{loadingGrade ? 'Grading your answer...' : 'Submit answer'}</button>}</div>
-          {grade && <div className="flow-step"><p className="flow-label">Tutor feedback</p><div className="feedback-card"><div className="score-ring" aria-label={`Score ${grade.score} out of 100`}>{grade.score}</div><div><p className="feedback-status">{grade.correct ? 'Correct understanding' : 'Keep building'}</p><p>{grade.feedback}</p></div></div></div>}
-          <button type="button" className="secondary-button export-button" onClick={exportAnswer}>Export</button>
+        <div className="answer-flow grid gap-4 sm:gap-5" style={{ marginTop: 24 }}>
+          <div className="flow-step min-w-0"><p className="flow-label">Your question</p><div className="question-card min-w-0 p-4 sm:p-5"><p className="wrap-break-word text-base sm:text-xl">{question}</p></div></div>
+          <div className="flow-step min-w-0"><p className="flow-label">Your answer</p><textarea aria-label="Your short answer" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Take a moment to explain it in your own words..." rows={5} disabled={!!grade} className="answer-textarea min-h-32 w-full p-3 text-sm sm:min-h-36 sm:p-4 sm:text-base wrap-anywhere" />{!grade && <button onClick={submitAnswer} disabled={loadingGrade || !userAnswer.trim()} className="primary-button mt-2 min-h-11 w-full px-4 text-sm sm:w-auto">{loadingGrade ? 'Grading your answer...' : 'Submit answer'}</button>}</div>
+          {grade && <div className="flow-step min-w-0"><p className="flow-label">Tutor feedback</p><div className="feedback-card flex-col gap-4 sm:flex-row sm:gap-5"><div className="score-ring shrink-0" aria-label={`Score ${grade.score} out of 100`}>{grade.score}</div><div className="min-w-0"><p className="feedback-status">{grade.correct ? 'Correct understanding' : 'Keep building'}</p><p className="text-sm sm:text-base wrap-anywhere">{grade.feedback}</p></div></div></div>}
+          <button type="button" className="secondary-button export-button min-h-11 w-full sm:w-auto" onClick={exportAnswer}>Export</button>
         </div>
       )}
     </div>

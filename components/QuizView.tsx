@@ -109,19 +109,19 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
   }, [answeredCount, questions.length, onComplete, score]);
 
   return (
-    <div className="quiz-view">
-      <div className="difficulty-control" aria-label="Quiz difficulty">
-        <span className="field-label">Difficulty</span>
-        <div className="difficulty-options">
+    <div className="quiz-view min-w-0 w-full">
+      <div className="difficulty-control !flex-row !items-center gap-2 sm:gap-3" aria-label="Quiz difficulty">
+        <span className="field-label shrink-0 text-sm sm:text-base">Difficulty</span>
+        <div className="difficulty-options !flex min-w-0 flex-1 gap-1.5 sm:gap-2">
           {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
-            <button key={level} type="button" className={`difficulty-option ${difficulty === level ? 'active' : ''}`} onClick={() => setDifficulty(level)} aria-pressed={difficulty === level}>{level}</button>
+            <button key={level} type="button" className={`difficulty-option !min-h-11 !min-w-0 !flex-1 !px-2 py-2 text-sm sm:!px-3 sm:text-base ${difficulty === level ? 'active' : ''}`} onClick={() => setDifficulty(level)} aria-pressed={difficulty === level}>{level}</button>
           ))}
         </div>
       </div>
       <button
         onClick={generateQuiz}
         disabled={loading || !notes.trim()}
-        className="primary-button"
+        className="primary-button min-h-11 w-full px-4 text-sm sm:w-auto"
       >
         {loading ? 'Writing questions...' : questions.length ? 'Generate a new quiz' : 'Generate quiz from notes'}
       </button>
@@ -129,16 +129,18 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
       {error && <p className="error-message" role="alert">{error}</p>}
 
       {questions.length > 0 && (
-        <div className="quiz-content">
-          <div className="quiz-toolbar">
-            <span className="quiz-progress-label">{answeredCount} of {questions.length} answered</span>
-            <div className="progress-track" style={{ flex: 1, maxWidth: 180 }}><div className="progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} /></div>
-            <span className="quiz-progress-label">{answeredCount === questions.length ? `${score}/${questions.length} correct` : 'Keep going'}</span>
-            <button type="button" className="secondary-button export-button" onClick={exportQuiz}>Export</button>
+        <div className="quiz-content min-w-0">
+          <div className="quiz-toolbar flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center justify-between gap-3 sm:contents">
+              <span className="quiz-progress-label text-xs sm:text-sm">{answeredCount} of {questions.length} answered</span>
+              <span className="quiz-progress-label text-right text-xs sm:text-sm">{answeredCount === questions.length ? `${score}/${questions.length} correct` : 'Keep going'}</span>
+            </div>
+            <div className="progress-track w-full max-w-none sm:max-w-45" style={{ flex: 1 }}><div className="progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} /></div>
+            <button type="button" className="secondary-button export-button min-h-11 w-full sm:w-auto" onClick={exportQuiz}>Export</button>
           </div>
 
           {answeredCount === questions.length && (
-            <div className="score-banner"><div><strong>Quiz complete</strong><span>You made it through all five questions.</span></div><div className="score-value">{Math.round((score / questions.length) * 100)}%</div></div>
+            <div className="score-banner flex-col items-start gap-3 sm:flex-row sm:items-center"><div className="min-w-0"><strong className="text-xl sm:text-2xl">Quiz complete</strong><span className="block break-words">You made it through all five questions.</span></div><div className="score-value text-2xl sm:text-3xl">{Math.round((score / questions.length) * 100)}%</div></div>
           )}
 
           <div>
@@ -147,8 +149,8 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
               const answered = selected !== undefined;
 
               return (
-                <div key={qIndex} className="quiz-card">
-                  <p className="question-heading"><span className="question-number">Q{qIndex + 1}</span><span>{q.question}</span></p>
+                <div key={qIndex} className="quiz-card min-w-0 p-4 sm:p-5">
+                  <p className="question-heading min-w-0 text-base sm:text-xl"><span className="question-number shrink-0">Q{qIndex + 1}</span><span className="min-w-0 break-words [overflow-wrap:anywhere]">{q.question}</span></p>
 
                   <div className="answer-options">
                     {q.options.map((opt, oIndex) => {
@@ -167,16 +169,16 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
                           key={oIndex}
                           onClick={() => selectAnswer(qIndex, oIndex)}
                           disabled={answered}
-                          className={`answer-option ${stateClasses}`}
+                          className={`answer-option min-h-11 w-full px-3 py-3 text-sm sm:text-base ${stateClasses}`}
                         >
-                          <span className="answer-letter">{LETTERS[oIndex]}</span><span>{opt}</span>
+                          <span className="answer-letter shrink-0">{LETTERS[oIndex]}</span><span className="min-w-0 break-words [overflow-wrap:anywhere]">{opt}</span>
                         </button>
                       );
                     })}
                   </div>
 
                   {answered && (
-                    <p className="explanation">
+                    <p className="explanation break-words [overflow-wrap:anywhere] text-sm">
                       {q.explanation}
                     </p>
                   )}
