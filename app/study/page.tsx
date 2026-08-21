@@ -93,7 +93,7 @@ export default function StudyPage() {
             <aside className="tip-card"><span className="tip-label">A small study tip</span><h2>Recall beats rereading.</h2><p>Try answering from memory before checking the explanation. That little pause helps the idea stick.</p></aside>
           </section>
         )}
-
+//full dashboard
         {mode === 'shortanswer' && (
           <section className="workspace" role="tabpanel">
             <div className="panel"><div className="panel-header"><div><p className="panel-kicker">03 / Explain</p><h2 className="panel-title">Put your understanding into words.</h2><p className="panel-description">Write a thoughtful answer, then get specific feedback from your AI tutor.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><div style={{ marginTop: 24 }}><ShortAnswer notes={notes} /></div></div></div>
