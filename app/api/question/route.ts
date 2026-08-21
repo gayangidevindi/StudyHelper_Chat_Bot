@@ -1,6 +1,7 @@
 import { generateObject } from 'ai';
 import { groq } from '@ai-sdk/groq';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const questionSchema = z.object({
   question: z.string(),
@@ -8,6 +9,10 @@ const questionSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!checkRateLimit(req, 'question', 5)) {
+    return Response.json({ error: 'Too many question requests. Please try again in a minute.' }, { status: 429 });
+  }
+
   const { notes } = await req.json();
 
   if (!notes || notes.trim().length === 0) {

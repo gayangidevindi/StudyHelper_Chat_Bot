@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${zillaSlab.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased bg-[#16241F] text-[#F2EFE4] font-(family-name:--font-body)`}
+        className={`${zillaSlab.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased font-(family-name:--font-body)`}
       >
         {children}
       </body>

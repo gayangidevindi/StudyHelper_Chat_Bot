@@ -9,6 +9,8 @@ type Question = {
   explanation: string;
 };
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 type QuizViewProps = {
@@ -21,6 +23,7 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
   const [loading, setLoading] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [error, setError] = useState('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const reported = useRef(false);
 
   const generateQuiz = async () => {
@@ -32,7 +35,7 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
       const res = await fetch('/api/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify({ notes, difficulty }),
       });
       if (!res.ok) throw new Error('Failed to generate quiz');
       const data = await res.json();
@@ -42,6 +45,45 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportQuiz = () => {
+    const markdown = [
+      '# Study Helper Quiz',
+      '',
+      `Difficulty: ${difficulty}`,
+      '',
+      ...questions.flatMap((question, index) => {
+        const selected = answers[index];
+        const selection = selected === undefined ? 'Not answered' : `${LETTERS[selected]}: ${question.options[selected]}`;
+        const correctness = selected === undefined ? 'Not answered' : selected === question.correctIndex ? 'Correct' : 'Incorrect';
+        return [
+          `## Question ${index + 1}`,
+          '',
+          question.question,
+          '',
+          ...question.options.map((option, optionIndex) => `- ${LETTERS[optionIndex]}. ${option}`),
+          '',
+          `**Selected:** ${selection}`,
+          `**Result:** ${correctness}`,
+          `**Correct answer:** ${LETTERS[question.correctIndex]}: ${question.options[question.correctIndex]}`,
+          '',
+          `**Explanation:** ${question.explanation}`,
+          '',
+        ];
+      }),
+      `## Score`,
+      '',
+      `${score}/${questions.length} correct (${Math.round((score / questions.length) * 100)}%)`,
+      '',
+    ].join('\n');
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'study-helper-quiz.md';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const selectAnswer = (qIndex: number, optionIndex: number) => {
@@ -68,6 +110,14 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
 
   return (
     <div className="quiz-view">
+      <div className="difficulty-control" aria-label="Quiz difficulty">
+        <span className="field-label">Difficulty</span>
+        <div className="difficulty-options">
+          {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
+            <button key={level} type="button" className={`difficulty-option ${difficulty === level ? 'active' : ''}`} onClick={() => setDifficulty(level)} aria-pressed={difficulty === level}>{level}</button>
+          ))}
+        </div>
+      </div>
       <button
         onClick={generateQuiz}
         disabled={loading || !notes.trim()}
@@ -84,6 +134,7 @@ export default function QuizView({ notes, onComplete }: QuizViewProps) {
             <span className="quiz-progress-label">{answeredCount} of {questions.length} answered</span>
             <div className="progress-track" style={{ flex: 1, maxWidth: 180 }}><div className="progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} /></div>
             <span className="quiz-progress-label">{answeredCount === questions.length ? `${score}/${questions.length} correct` : 'Keep going'}</span>
+            <button type="button" className="secondary-button export-button" onClick={exportQuiz}>Export</button>
           </div>
 
           {answeredCount === questions.length && (

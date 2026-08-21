@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import type { UIMessage } from 'ai';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import ExplainChat from '@/components/ExplainChat';
 import NotesInput from '@/components/NotesInput';
 import QuizView from '@/components/QuizView';
@@ -8,14 +9,62 @@ import ShortAnswer from '@/components/ShortAnswer';
 import ProgressTracker, { ProgressStats } from '@/components/ProgressTracker';
 import { ClipboardList, PenLine, Sparkles, type LucideIcon } from 'lucide-react';
 
+const SESSION_KEY = 'study-helper:session';
+const THEME_KEY = 'study-helper:theme';
+type Theme = 'light' | 'dark';
+type SessionState = { notes: string; stats: ProgressStats; messages: UIMessage[]; theme: Theme };
+
+const defaultStats: ProgressStats = { quizzesTaken: 0, questionsAnswered: 0, correctAnswers: 0 };
+
+function readSession(): SessionState {
+  const systemTheme: Theme = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (typeof window === 'undefined') return { notes: '', stats: defaultStats, messages: [], theme: systemTheme };
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    const saved = raw ? JSON.parse(raw) as SessionState : null;
+    const storedTheme = localStorage.getItem(THEME_KEY);
+    const preferredTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : systemTheme;
+    return saved ? {
+      notes: saved.notes ?? '',
+      stats: saved.stats ?? defaultStats,
+      messages: saved.messages ?? [],
+      theme: preferredTheme,
+    } : { notes: '', stats: defaultStats, messages: [], theme: preferredTheme };
+  } catch {
+    return { notes: '', stats: defaultStats, messages: [], theme: systemTheme };
+  }
+}
+
 export default function StudyPage() {
-  const [notes, setNotes] = useState('');
+  const [initialSession] = useState(readSession);
+  const [notes, setNotes] = useState(initialSession.notes);
   const [mode, setMode] = useState<'explain' | 'quiz' | 'shortanswer'>('explain');
   const [stats, setStats] = useState<ProgressStats>({
-    quizzesTaken: 0,
-    questionsAnswered: 0,
-    correctAnswers: 0,
+    ...initialSession.stats,
   });
+  const [chatMessages, setChatMessages] = useState<UIMessage[]>(initialSession.messages);
+  const [theme, setTheme] = useState<Theme>(initialSession.theme ?? 'dark');
+  const [resetKey, setResetKey] = useState(0);
+  const hydrated = useSyncExternalStore(() => () => {}, () => true, () => false);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const timeout = window.setTimeout(() => {
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ notes, stats, messages: chatMessages }));
+        localStorage.setItem(THEME_KEY, theme);
+      } catch {
+        // Storage may be unavailable or full; the in-memory session still works.
+      }
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [chatMessages, hydrated, notes, stats, theme]);
+
+  if (!hydrated) return null;
 
   const handleQuizComplete = (correct: number, total: number) => {
     setStats((prev) => ({
@@ -23,6 +72,24 @@ export default function StudyPage() {
       questionsAnswered: prev.questionsAnswered + total,
       correctAnswers: prev.correctAnswers + correct,
     }));
+  };
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+  };
+
+  const clearSession = () => {
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch {
+      // Continue resetting the in-memory session if storage is unavailable.
+    }
+    setNotes('');
+    setStats({ quizzesTaken: 0, questionsAnswered: 0, correctAnswers: 0 });
+    setChatMessages([]);
+    setResetKey((current) => current + 1);
   };
 
   const tabs: { key: typeof mode; label: string }[] = [
@@ -44,7 +111,12 @@ export default function StudyPage() {
           <div className="brand-mark" aria-hidden="true">S</div>
           <div><span className="brand-name">Study Helper</span><span className="brand-caption">Your active learning desk</span></div>
         </div>
-        <div className="nav-status"><i className="status-dot" aria-hidden="true" /><span>AI tutor online</span></div>
+        <div className="nav-actions">
+          <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
+            {theme === 'dark' ? <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" /></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 0 1 9.3 3.5 8.5 8.5 0 1 0 20.5 14.7Z" /></svg>}
+          </button>
+          <div className="nav-status"><i className="status-dot" aria-hidden="true" /><span>AI tutor online</span></div>
+        </div>
       </nav>
 
       <main className="dashboard">
@@ -57,7 +129,7 @@ export default function StudyPage() {
           <p className="hero-copy">Turn notes into understanding with a patient AI tutor, useful practice, and feedback that keeps you moving.</p>
         </header>
 
-        <ProgressTracker stats={stats} />
+        <div className="progress-actions"><ProgressTracker stats={stats} /><button type="button" className="secondary-button clear-session" onClick={clearSession}>Clear session</button></div>
 
         <div className="mode-tabs" role="tablist" aria-label="Learning modes">
           {tabs.map((tab) => {
@@ -78,28 +150,22 @@ export default function StudyPage() {
           })}
         </div>
 
-        {mode === 'explain' && (
-          <section className="workspace single" role="tabpanel">
+        <section className="workspace single" role="tabpanel" aria-hidden={mode !== 'explain'} style={{ display: mode === 'explain' ? 'block' : 'none' }}>
             <div className="panel">
               <div className="panel-header"><div><p className="panel-kicker">01 / Understand</p><h2 className="panel-title">Ask your tutor anything.</h2><p className="panel-description">Untangle a tricky idea, ask for an example, or paste a concept you want explained simply.</p></div><span className="mode-icon" aria-hidden="true"><Sparkles size={18} strokeWidth={1.8} /></span></div>
-              <div className="panel-body"><ExplainChat /></div>
+              <div className="panel-body"><ExplainChat key={resetKey} initialMessages={chatMessages} onMessagesChange={setChatMessages} /></div>
             </div>
-          </section>
-        )}
+        </section>
 
-        {mode === 'quiz' && (
-          <section className="workspace" role="tabpanel">
-            <div className="panel"><div className="panel-header"><div><p className="panel-kicker">02 / Recall</p><h2 className="panel-title">Build a quiz from your notes.</h2><p className="panel-description">Practice retrieval with five focused questions, then see why each answer is right.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><QuizView notes={notes} onComplete={handleQuizComplete} /></div></div>
+        <section className="workspace" role="tabpanel" aria-hidden={mode !== 'quiz'} style={{ display: mode === 'quiz' ? 'grid' : 'none' }}>
+            <div className="panel"><div className="panel-header"><div><p className="panel-kicker">02 / Recall</p><h2 className="panel-title">Build a quiz from your notes.</h2><p className="panel-description">Practice retrieval with five focused questions, then see why each answer is right.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><QuizView key={resetKey} notes={notes} onComplete={handleQuizComplete} /></div></div>
             <aside className="tip-card"><span className="tip-label">A small study tip</span><h2>Recall beats rereading.</h2><p>Try answering from memory before checking the explanation. That little pause helps the idea stick.</p></aside>
-          </section>
-        )}
+        </section>
 
-        {mode === 'shortanswer' && (
-          <section className="workspace" role="tabpanel">
-            <div className="panel"><div className="panel-header"><div><p className="panel-kicker">03 / Explain</p><h2 className="panel-title">Put your understanding into words.</h2><p className="panel-description">Write a thoughtful answer, then get specific feedback from your AI tutor.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><div style={{ marginTop: 24 }}><ShortAnswer notes={notes} /></div></div></div>
+        <section className="workspace" role="tabpanel" aria-hidden={mode !== 'shortanswer'} style={{ display: mode === 'shortanswer' ? 'grid' : 'none' }}>
+            <div className="panel"><div className="panel-header"><div><p className="panel-kicker">03 / Explain</p><h2 className="panel-title">Put your understanding into words.</h2><p className="panel-description">Write a thoughtful answer, then get specific feedback from your AI tutor.</p></div></div><div className="panel-body"><NotesInput value={notes} onChange={setNotes} /><div style={{ marginTop: 24 }}><ShortAnswer key={resetKey} notes={notes} /></div></div></div>
             <aside className="tip-card"><span className="tip-label">A small study tip</span><h2>Clarity comes from effort.</h2><p>Do not worry about perfect wording. Start with what you know and let the feedback show you what to strengthen.</p></aside>
-          </section>
-        )}
+        </section>
       </main>
     </div>
   );

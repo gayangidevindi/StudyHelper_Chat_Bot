@@ -17,6 +17,33 @@ export default function ShortAnswer({ notes }: { notes: string }) {
   const [loadingGrade, setLoadingGrade] = useState(false);
   const [error, setError] = useState('');
 
+  const exportAnswer = () => {
+    const markdown = [
+      '# Study Helper Short Answer',
+      '',
+      '## Question',
+      '',
+      question,
+      '',
+      '## Reference Answer',
+      '',
+      referenceAnswer || 'Not available',
+      '',
+      '## Your Answer',
+      '',
+      userAnswer || 'Not answered',
+      '',
+      ...(grade ? ['## Grade', '', `Score: ${grade.score}/100`, `Result: ${grade.correct ? 'Correct' : 'Needs improvement'}`, '', grade.feedback, ''] : []),
+    ].join('\n');
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'study-helper-short-answer.md';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const generateQuestion = async () => {
     setError('');
     setLoadingQuestion(true);
@@ -79,6 +106,7 @@ export default function ShortAnswer({ notes }: { notes: string }) {
           <div className="flow-step"><p className="flow-label">Your question</p><div className="question-card"><p>{question}</p></div></div>
           <div className="flow-step"><p className="flow-label">Your answer</p><textarea aria-label="Your short answer" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Take a moment to explain it in your own words..." rows={5} disabled={!!grade} className="answer-textarea" />{!grade && <button onClick={submitAnswer} disabled={loadingGrade || !userAnswer.trim()} className="primary-button" style={{ marginTop: 10 }}>{loadingGrade ? 'Grading your answer...' : 'Submit answer'}</button>}</div>
           {grade && <div className="flow-step"><p className="flow-label">Tutor feedback</p><div className="feedback-card"><div className="score-ring" aria-label={`Score ${grade.score} out of 100`}>{grade.score}</div><div><p className="feedback-status">{grade.correct ? 'Correct understanding' : 'Keep building'}</p><p>{grade.feedback}</p></div></div></div>}
+          <button type="button" className="secondary-button export-button" onClick={exportAnswer}>Export</button>
         </div>
       )}
     </div>

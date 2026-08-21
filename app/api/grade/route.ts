@@ -1,6 +1,7 @@
 import { generateObject } from 'ai';
 import { groq } from '@ai-sdk/groq';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const gradeSchema = z.object({
   correct: z.boolean(),
@@ -9,6 +10,10 @@ const gradeSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!checkRateLimit(req, 'grade', 5)) {
+    return Response.json({ error: 'Too many grading requests. Please try again in a minute.' }, { status: 429 });
+  }
+
   const { question, correctAnswer, userAnswer } = await req.json();
 
   if (!question || !userAnswer) {
